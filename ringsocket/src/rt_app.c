@@ -22,6 +22,14 @@ rt_ret peer_open(
     return RT_OK;
 }
 
+rt_ret send_all(
+    rs_t * rs
+) {
+    (void) rs;
+    RS_LOG(LOG_DEBUG, "called");
+    return RT_OK;
+}
+
 rt_ret peer_close(
     rs_t * rs
 ) {
@@ -31,9 +39,8 @@ rt_ret peer_close(
 }
 
 rt_ret timer(
-    rs_t * rs
+    void
 ) {
-    (void) rs;
     RS_LOG(LOG_DEBUG, "called");
     return RT_OK;
 }
@@ -58,9 +65,9 @@ RS_APP(
             RS_NET(uint8_t)    // is_collapsed
         ),
         RS_CASE_BIN(13, title_project,
-            RS_NTOH(uint32_t),  // id
-            RS_STR_HEAP(char *, // title -- allocate on the heap to store as-is
-                RT_STRLEN_MIN,  // (Note: in bytes, not UTF-8 char count)
+            RS_NTOH(uint32_t), // id
+            RS_STR_HEAP( // title -- allocate on the heap to store as-is
+                RT_STRLEN_MIN, // (Note: in bytes, not UTF-8 char count)
                 RT_STRLEN_MAX_TITLE
             )
         ),
@@ -69,7 +76,7 @@ RS_APP(
             RS_NTOH(uint32_t), // crc32
             RS_NTOH(uint16_t), // splice_i
             RS_NTOH(uint16_t), // delete_c
-            RS_STR(char *, // diff_str -- temp, so use a VLA instead of the heap
+            RS_STR( // diff_str -- temp var, so use a VLA instead of the heap
                 RT_STRLEN_MIN,
                 RT_STRLEN_MAX_DIFF
             )
