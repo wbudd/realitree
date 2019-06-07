@@ -40,9 +40,9 @@ rt_ret timer(
 }
 
 RS_APP(
-	RS_INIT(app_init),
-	RS_OPEN(peer_open),
-	RS_READ_SWITCH(
+    RS_INIT(app_init),
+    RS_OPEN(peer_open),
+    RS_READ_SWITCH(
         RS_CASE_BIN(0, send_all),
         RS_CASE_BIN(10, add_project,
             RS_NTOH(uint32_t), // parent_id
@@ -79,7 +79,7 @@ RS_APP(
             RS_NTOH(uint32_t), // parent_id
             RS_NTOH(uint16_t) // i
         )
-	),
-	NNWS_CLOSE(peer_close),
-	NNWS_TIMER(timer)
+    ),
+    NNWS_CLOSE(peer_close),
+    NNWS_TIMER(timer)
 );
