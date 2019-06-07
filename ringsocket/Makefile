@@ -4,10 +4,11 @@
 # RingSocket apps don't need to bother with soname versioning, because they're
 # only runtime-loaded by RingSocket through dlopen() in accordance with the .so
 # filename specified in the RingSocket configuration file. (In the unlikely
-# event of rs_app() ABI breakage, RingSocket will introduce a key/value pair in
-# the app directives of its conf file to differentiate between ABI versions.)
+# event of ringsocket_app() ABI breakage, RingSocket will introduce a key/value
+# pair in the app directives of its conf file to differentiate between ABI
+# versions.)
 
-NAME = realitree
+NAME = realitree.so
 NAME_PREFIX = rt_
 
 # Required by <ringsocket_ring.h> (which is a dependency of <ringsocket.h>).
