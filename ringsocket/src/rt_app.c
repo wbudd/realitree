@@ -8,9 +8,8 @@
 #define RT_STRLEN_MAX_TITLE 64
 
 rt_ret app_init(
-    rs_t * rs
+    void
 ) {
-    (void) rs;
     RS_LOG(LOG_DEBUG, "called"); // RS_LOG automatically includes function name
     return RT_OK;
 }
@@ -80,6 +79,6 @@ RS_APP(
             RS_NTOH(uint16_t) // i
         )
     ),
-    NNWS_CLOSE(peer_close),
-    NNWS_TIMER(timer)
+    RS_CLOSE(peer_close),
+    RS_TIMER(timer)
 );

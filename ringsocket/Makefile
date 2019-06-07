@@ -10,8 +10,15 @@
 NAME = realitree
 NAME_PREFIX = rt_
 
+# Required by <ringsocket_ring.h> (which is a dependency of <ringsocket.h>).
+RS_CACHELINE_SIZE := $(shell getconf LEVEL1_DCACHE_LINESIZE)
+ifeq ($(RS_CACHELINE_SIZE), 0)
+	RS_CACHELINE_SIZE = 64
+endif
+
 CC = gcc
-CFLAGS = -Wall -Wextra -Wpedantic -std=c11
+CFLAGS = -Wall -Wextra -Wpedantic -std=c11 \
+	-DRS_CACHELINE_SIZE=$(RS_CACHELINE_SIZE)
 CFLAGS_DLL = -fpic
 CFLAGS_OPTIM = -O3 -flto -fuse-linker-plugin
 LFLAGS_DLL = -shared -Wl,-z,relro,-z,now

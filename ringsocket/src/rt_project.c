@@ -20,9 +20,9 @@ rt_ret add_project(
 
 rt_ret move_project(
     rs_t * rs,
-    uint32_t old_parent_id
-    uint32_t new_parent_id
-    uint16_t old_i
+    uint32_t old_parent_id,
+    uint32_t new_parent_id,
+    uint16_t old_i,
     uint16_t new_i
 ) {
     (void) rs;
