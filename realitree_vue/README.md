@@ -1,4 +1,5 @@
 # realitree_vue
+The realitree frontend is a Vue.js project.
 
 ## Project setup
 ```
