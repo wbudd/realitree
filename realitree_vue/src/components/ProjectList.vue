@@ -72,8 +72,8 @@ export default {
           i++
         }
         const target = this.ws.draggedProjectTarget
-        this.ws.sendProjectMove(this.parentProject.id, target.parentId,
-                                i, target.index)
+        this.ws.sendProjectMove(this.parentProject.id, target.parentId, i,
+          target.index)
       } else if (newProjects.length > oldProjects.length) {
         for (let oldProject of oldProjects) {
           if (oldProject.id !== newProjects[i].id) {
@@ -94,10 +94,10 @@ export default {
         }
         if (oldProjects[i].id === newProjects[j].id) {
           this.ws.sendProjectMove(this.parentProject.id, this.parentProject.id,
-                                  i, j)
+            i, j)
         } else {
           this.ws.sendProjectMove(this.parentProject.id, this.parentProject.id,
-                                  j, i)
+            j, i)
         }
       }
       this.parentProject.children = newProjects

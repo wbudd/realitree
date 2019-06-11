@@ -45,21 +45,22 @@ export default {
   },
   computed: {
     widthCraft () {
-      const getTreeGrowth = project => project.isCollapsed ? [0, []] : project
-        .children.reduce(
+      const getTreeGrowth = project => project.isCollapsed
+        ? [0, []]
+        : project.children.reduce(
           ([totalLeafCount, longestLeafCountArray], childProject) => {
-          let [leafCount, leafCountArray] = getTreeGrowth(childProject)
-          leafCountArray.push(leafCount)
-          const sum = a => a.reduce((prev, cur) => prev + cur, 0)
-          return [
-            leafCount ? totalLeafCount + leafCount : totalLeafCount + 1,
-            leafCountArray.length === longestLeafCountArray.length
-            ? (sum(leafCountArray) < sum(longestLeafCountArray)
-               ? leafCountArray : longestLeafCountArray)
-            : (leafCountArray.length > longestLeafCountArray.length
-               ? leafCountArray : longestLeafCountArray)
-          ]
-        }, [0, []])
+            let [leafCount, leafCountArray] = getTreeGrowth(childProject)
+            leafCountArray.push(leafCount)
+            const sum = a => a.reduce((prev, cur) => prev + cur, 0)
+            return [
+              leafCount ? totalLeafCount + leafCount : totalLeafCount + 1,
+              leafCountArray.length === longestLeafCountArray.length
+                ? (sum(leafCountArray) < sum(longestLeafCountArray)
+                  ? leafCountArray : longestLeafCountArray)
+                : (leafCountArray.length > longestLeafCountArray.length
+                  ? leafCountArray : longestLeafCountArray)
+            ]
+          }, [0, []])
       const [leafCount, leafCounts] = getTreeGrowth(this.project)
       const percentage = 100 / (1 + leafCount + leafCounts.slice(1)
         .reduce((size, count) => size + leafCount / count, 0))
