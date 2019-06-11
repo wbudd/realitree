@@ -16,7 +16,7 @@
 export default {
   name: 'TaskList',
   inject: {
-    ws: { from: 'kaizenWebSocket' }
+    ws: { from: 'realitreeWebSocket' }
   },
   props: {
     tasks: {

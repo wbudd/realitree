@@ -31,7 +31,7 @@ export default {
     ProjectContainer: () => import('./ProjectContainer')
   },
   inject: {
-    ws: { from: 'kaizenWebSocket' }
+    ws: { from: 'realitreeWebSocket' }
   },
   props: {
     depthIsOdd: {

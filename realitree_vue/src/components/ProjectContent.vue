@@ -82,7 +82,7 @@ export default {
     ButtonTag
   },
   inject: {
-    ws: { from: 'kaizenWebSocket' }
+    ws: { from: 'realitreeWebSocket' }
   },
   props: {
     depthIsOdd: {

@@ -2,11 +2,9 @@
 // Copyright © 2019 William Budd
 
 import conf from './conf'
-import crc32 from './crc32'
 
 export default class {
   constructor () {
-    this.test = new crc32('この4郎')
     this.newId = 1
 
     this.draggedProjectTarget = {
@@ -72,8 +70,7 @@ export default class {
     this.send_(args)
   }
   send_ ({ kind, id = [], bool = [], float32 = [], float64 = [], int8 = [],
-           int16 = [], int32 = [], uint8 = [], uint16 = [], uint32 = [],
-           str = [] }) {
+    int16 = [], int32 = [], uint8 = [], uint16 = [], uint32 = [], str = [] }) {
     const size = 1 +
       4 * id.length +
       bool.length +

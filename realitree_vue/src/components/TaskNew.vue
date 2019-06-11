@@ -42,7 +42,7 @@ export default {
     TagTree
   },
   inject: {
-    ws: { from: 'kaizenWebSocket' }
+    ws: { from: 'realitreeWebSocket' }
   },
   props: {
     projects: {

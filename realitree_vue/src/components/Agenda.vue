@@ -77,7 +77,7 @@ export default {
     TaskNew
   },
   inject: {
-    ws: { from: 'kaizenWebSocket' }
+    ws: { from: 'realitreeWebSocket' }
   },
   data () {
     return {
