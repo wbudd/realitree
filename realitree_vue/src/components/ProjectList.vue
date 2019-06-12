@@ -3,9 +3,11 @@
 
 <template>
   <draggable
-    :options="dragOptions"
     :value="parentProject.children"
-    element="ul"
+    draggable=".draggableItem"
+    group="draggableProjects"
+    handle=".dragHandle"
+    tag="ul"
     @input="v => setProjects(v)"
     @start="onDragStart($event)"
     @end="onDragEnd($event)"
@@ -41,15 +43,6 @@ export default {
     parentProject: {
       type: Object,
       required: true
-    }
-  },
-  computed: {
-    dragOptions () {
-      return {
-        draggable: '.draggableItem',
-        group: 'draggableProjects',
-        handle: '.dragHandle'
-      }
     }
   },
   methods: {

@@ -9,6 +9,10 @@ rt_ret load_projects(
     ckv_t * ckv
 );
 
+void send_projects(
+    rs_t * rs
+);
+
 rt_ret add_project(
     rs_t * rs,
     uint32_t parent_id,

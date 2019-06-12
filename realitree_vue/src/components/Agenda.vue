@@ -51,7 +51,7 @@
         v-else
         id="content"
       >
-        IK RAM JE IN JE KUTJE
+        todo
       </div>
     </keep-alive>
     <task-new

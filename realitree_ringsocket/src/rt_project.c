@@ -10,72 +10,105 @@ static struct rt_project root_project[1] = {0};
 static rt_ret load_project(
     ckv_t * ckv,
     struct ckv_map * map,
-	struct rt_project * project
+    struct rt_project * project
 );
 
 static rt_ret load_child_projects(
     ckv_t * ckv,
     struct ckv_map * map,
     struct rt_project * project,
-	char const * key
+    char const * key
 ) {
-	struct ckv_map * child_maps = NULL;
-	size_t child_map_c = 0;
-	RT_GUARD_CKV(ckv_get_maps(ckv, (ckv_arg_maps){
-		.map = map,
-		.key = key,
-		.dst = &child_maps,
-		.elem_c = &child_map_c
-	}));
-	if (!child_map_c) {
-		return RT_OK;
-	}
-	project = project->child = calloc(1, sizeof(struct rt_project));
-	for (;; project = project->next = calloc(1, sizeof(struct rt_project))) {
-		RT_GUARD(load_project(ckv, child_maps++, project));
-		if (!--child_map_c) {
-			return RT_OK;
-		}
-	}
+    struct ckv_map * child_maps = NULL;
+    size_t child_map_c = 0;
+    RT_GUARD_CKV(ckv_get_maps(ckv, (ckv_arg_maps){
+        .map = map,
+        .key = key,
+        .dst = &child_maps,
+        .elem_c = &child_map_c
+    }));
+    if (!child_map_c) {
+        return RT_OK;
+    }
+    project = project->child = calloc(1, sizeof(struct rt_project));
+    for (;; project = project->next = calloc(1, sizeof(struct rt_project))) {
+        RT_GUARD(load_project(ckv, child_maps++, project));
+        if (!--child_map_c) {
+            return RT_OK;
+        }
+    }
 }
 
 static rt_ret load_project(
     ckv_t * ckv,
     struct ckv_map * map,
-	struct rt_project * project
+    struct rt_project * project
 ) {
-	RT_GUARD_CKV(ckv_get_uint32(ckv, (ckv_arg_uint32){
-		.map = map,
-		.key = "id",
-		.dst = &project->id,
-		.is_required = true
-	}));
-	RT_GUARD_CKV(ckv_get_str(ckv, (ckv_arg_str){
-		.map = map,
-		.key = "title",
-		.dst = &project->title
-	}));
-	RT_GUARD_CKV(ckv_get_str(ckv, (ckv_arg_str){
-		.map = map,
-		.key = "description",
-		.dst = &project->description
-	}));
-	{
-		bool is_collapsed = false;
-		RT_GUARD_CKV(ckv_get_bool(ckv, (ckv_arg_bool){
-			.map = map,
-			.key = "is_collapsed",
-			.dst = &is_collapsed
-		}));
-		project->is_collapsed = is_collapsed; // from bool type to uint8_t
-	}
-	return load_child_projects(ckv, map, project, "children");
+    RT_GUARD_CKV(ckv_get_uint32(ckv, (ckv_arg_uint32){
+        .map = map,
+        .key = "id",
+        .dst = &project->id,
+        .is_required = true
+    }));
+    RT_GUARD_CKV(ckv_get_str(ckv, (ckv_arg_str){
+        .map = map,
+        .key = "title",
+        .dst = &project->title
+    }));
+    RT_GUARD_CKV(ckv_get_str(ckv, (ckv_arg_str){
+        .map = map,
+        .key = "description",
+        .dst = &project->description
+    }));
+    {
+        bool is_collapsed = false;
+        RT_GUARD_CKV(ckv_get_bool(ckv, (ckv_arg_bool){
+            .map = map,
+            .key = "is_collapsed",
+            .dst = &is_collapsed
+        }));
+        project->is_collapsed = is_collapsed; // from bool type to uint8_t
+    }
+    return load_child_projects(ckv, map, project, "children");
 }
 
 rt_ret load_projects(
     ckv_t * ckv
 ) {
-	return load_child_projects(ckv, NULL, root_project, "projects");
+    return load_child_projects(ckv, NULL, root_project, "projects");
+}
+
+static void send_child_projects(
+    rs_t * rs,
+    struct rt_project const * p
+) {
+    uint16_t child_c = 0;
+    for (struct rt_project const * q = p; q; q = q->next) {
+        child_c++;
+    }
+    rs_w_uint16_hton(rs, child_c);
+    while (p) {
+        rs_w_uint32_hton(rs, p->id);
+        if (p->title) {
+            rs_w_p(rs, p->title, strlen(p->title) + 1);
+        } else {
+            rs_w_uint8(rs, '\0');
+        }
+        if (p->description) {
+            rs_w_p(rs, p->description, strlen(p->description) + 1);
+        } else {
+            rs_w_uint8(rs, '\0');
+        }
+        rs_w_uint8(rs, p->is_collapsed);
+        send_child_projects(rs, p->child);
+        p = p->next;
+    }
+}
+
+void send_projects(
+    rs_t * rs
+) {
+    send_child_projects(rs, root_project->child);
 }
 
 rt_ret add_project(

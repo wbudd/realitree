@@ -21,8 +21,11 @@ rt_ret app_init(
 rt_ret send_all(
     rs_t * rs
 ) {
-    (void) rs;
-    RS_LOG(LOG_DEBUG);
+	rs_w_uint32_hton(rs, client_offset);
+	client_offset += 0x10000;
+	//send_tasks(rs);
+	send_projects(rs);
+    rs_to_cur(rs, false, NULL, 0);
     return RT_OK;
 }
 
