@@ -14,17 +14,17 @@ static uint32_t client_offset = 1;
 rt_ret app_init(
     void
 ) {
-	init_tasks();
-	return load_from_storage(&client_offset);
+    init_tasks();
+    return load_from_storage(&client_offset);
 }
 
 rt_ret send_all(
     rs_t * rs
 ) {
-	rs_w_uint32_hton(rs, client_offset);
-	client_offset += 0x10000;
-	//send_tasks(rs);
-	send_projects(rs);
+    rs_w_uint32_hton(rs, client_offset);
+    client_offset += 0x10000;
+    //send_tasks(rs);
+    send_projects(rs);
     rs_to_cur(rs, false, NULL, 0);
     return RT_OK;
 }
