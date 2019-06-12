@@ -2,46 +2,49 @@
 // Copyright © 2019 William Budd
 
 #include "rt_project.h"
+#include "rt_storage.h"
+#include "rt_task.h"
 
 #define RT_STRLEN_MIN 0
 #define RT_STRLEN_MAX_DIFF 1024
 #define RT_STRLEN_MAX_TITLE 64
 
+static uint32_t client_offset = 1;
+
 rt_ret app_init(
     void
 ) {
-    RS_LOG(LOG_DEBUG, "called"); // RS_LOG automatically includes function name
-    return RT_OK;
-}
-
-rt_ret peer_open(
-    rs_t * rs
-) {
-    (void) rs;
-    RS_LOG(LOG_DEBUG, "called");
-    return RT_OK;
+	init_tasks();
+	return load_from_storage(&client_offset);
 }
 
 rt_ret send_all(
     rs_t * rs
 ) {
     (void) rs;
-    RS_LOG(LOG_DEBUG, "called");
+    RS_LOG(LOG_DEBUG);
     return RT_OK;
+}
+
+rt_ret peer_open(
+    rs_t * rs
+) {
+    RS_LOG(LOG_DEBUG);
+    return send_all(rs);
 }
 
 rt_ret peer_close(
     rs_t * rs
 ) {
     (void) rs;
-    RS_LOG(LOG_DEBUG, "called");
+    RS_LOG(LOG_DEBUG);
     return RT_OK;
 }
 
 rt_ret timer(
     void
 ) {
-    RS_LOG(LOG_DEBUG, "called");
+    RS_LOG(LOG_DEBUG);
     return RT_OK;
 }
 

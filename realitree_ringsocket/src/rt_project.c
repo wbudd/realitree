@@ -3,6 +3,81 @@
 
 #include "rt_project.h"
 
+static struct rt_project root_project[1] = {0};
+
+// Prototype required here because load_child_projects() and load_project()
+// call each other in mutual recursion.
+static rt_ret load_project(
+    ckv_t * ckv,
+    struct ckv_map * map,
+	struct rt_project * project
+);
+
+static rt_ret load_child_projects(
+    ckv_t * ckv,
+    struct ckv_map * map,
+    struct rt_project * project,
+	char const * key
+) {
+	struct ckv_map * child_maps = NULL;
+	size_t child_map_c = 0;
+	RT_GUARD_CKV(ckv_get_maps(ckv, (ckv_arg_maps){
+		.map = map,
+		.key = key,
+		.dst = &child_maps,
+		.elem_c = &child_map_c
+	}));
+	if (!child_map_c) {
+		return RT_OK;
+	}
+	project = project->child = calloc(1, sizeof(struct rt_project));
+	for (;; project = project->next = calloc(1, sizeof(struct rt_project))) {
+		RT_GUARD(load_project(ckv, child_maps++, project));
+		if (!--child_map_c) {
+			return RT_OK;
+		}
+	}
+}
+
+static rt_ret load_project(
+    ckv_t * ckv,
+    struct ckv_map * map,
+	struct rt_project * project
+) {
+	RT_GUARD_CKV(ckv_get_uint32(ckv, (ckv_arg_uint32){
+		.map = map,
+		.key = "id",
+		.dst = &project->id,
+		.is_required = true
+	}));
+	RT_GUARD_CKV(ckv_get_str(ckv, (ckv_arg_str){
+		.map = map,
+		.key = "title",
+		.dst = &project->title
+	}));
+	RT_GUARD_CKV(ckv_get_str(ckv, (ckv_arg_str){
+		.map = map,
+		.key = "description",
+		.dst = &project->description
+	}));
+	{
+		bool is_collapsed = false;
+		RT_GUARD_CKV(ckv_get_bool(ckv, (ckv_arg_bool){
+			.map = map,
+			.key = "is_collapsed",
+			.dst = &is_collapsed
+		}));
+		project->is_collapsed = is_collapsed; // from bool type to uint8_t
+	}
+	return load_child_projects(ckv, map, project, "children");
+}
+
+rt_ret load_projects(
+    ckv_t * ckv
+) {
+	return load_child_projects(ckv, NULL, root_project, "projects");
+}
+
 rt_ret add_project(
     rs_t * rs,
     uint32_t parent_id,

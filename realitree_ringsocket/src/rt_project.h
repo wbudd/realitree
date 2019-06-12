@@ -5,6 +5,10 @@
 
 #include "realitree.h"
 
+rt_ret load_projects(
+    ckv_t * ckv
+);
+
 rt_ret add_project(
     rs_t * rs,
     uint32_t parent_id,
