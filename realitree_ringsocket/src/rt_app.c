@@ -44,11 +44,11 @@ rt_ret peer_close(
     return RT_OK;
 }
 
-rt_ret timer(
+int64_t timer(
     void
 ) {
     RS_LOG(LOG_DEBUG);
-    return RT_OK;
+    return 1000000; // Call this function again in 1 second
 }
 
 RS_APP(
@@ -93,5 +93,5 @@ RS_APP(
         )
     ),
     RS_CLOSE(peer_close),
-    RS_TIMER(timer)
+    RS_TIMER_SLEEP(timer)
 );
