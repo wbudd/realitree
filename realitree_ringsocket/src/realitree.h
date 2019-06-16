@@ -26,7 +26,6 @@ typedef enum {
     } \
 } while (0)
 
-// These numbers are merely an attempt at providing sensible defaults
 struct rt_project {
     struct rt_task **tagged_tasks;
     struct rt_project *next;
@@ -49,3 +48,7 @@ struct rt_task {
     uint8_t status;
     //uint8_t access_profile;
 };
+
+// Global flag to mark whether or not anything has changed since the last
+// dump_to_file(). (Global, but of course not exported outside of the app SO.)
+extern bool rt_has_changed;

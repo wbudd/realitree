@@ -13,6 +13,13 @@ static rt_ret load_project(
     struct rt_project * project
 );
 
+// Same situation as above for store_child_projects() and store_project()
+static rt_ret store_project(
+    ckv_t * ckv,
+    struct ckv_map * map,
+    struct rt_project * project
+);
+
 static rt_ret load_child_projects(
     ckv_t * ckv,
     struct ckv_map * map,
@@ -78,6 +85,58 @@ rt_ret load_projects(
     return load_child_projects(ckv, NULL, root_project, "projects");
 }
 
+static rt_ret store_child_projects(
+    ckv_t * ckv,
+    struct ckv_map * map,
+    struct rt_project * project,
+    char const * key
+) {
+    size_t child_c = 0;
+    for (struct rt_project * p = project->child; p; p = p->next) {
+        child_c++;
+    }
+    if (!child_c) {
+        return RT_OK;
+    }
+    struct ckv_map * child_maps = NULL;
+    char const * child_keys[] =
+        {"id", "title", "description", "is_collapsed", "children"};
+    RT_GUARD_CKV(ckv_set_maps(ckv, map, key, &child_maps, child_c, child_keys,
+        CKV_ELEM_C(child_keys)));
+    project = project->child;
+    for (struct ckv_map * m = child_maps; m < child_maps + child_c; m++) {
+        RT_GUARD(store_project(ckv, m, project));
+        project = project->next;
+    }
+    return RT_OK;
+}
+
+static rt_ret store_project(
+    ckv_t * ckv,
+    struct ckv_map * map,
+    struct rt_project * project
+) {
+    RT_GUARD_CKV(ckv_set_uint32(ckv, map, "id", project->id));
+    if (project->title) {
+        RT_GUARD_CKV(ckv_set_str(ckv, map, "title", project->title));
+    }
+    if (project->description) {
+        RT_GUARD_CKV(ckv_set_str(ckv, map, "description",
+            project->description));
+    }
+    if (project->is_collapsed) {
+        RT_GUARD_CKV(ckv_set_uint8(ckv, map, "is_collapsed",
+            project->is_collapsed));
+    }
+    return store_child_projects(ckv, map, project, "children");
+}
+
+rt_ret store_projects(
+    ckv_t * ckv
+) {
+    return store_child_projects(ckv, NULL, root_project, "projects");
+}
+
 static void send_child_projects(
     rs_t * rs,
     struct rt_project const * p
@@ -123,6 +182,7 @@ rt_ret add_project(
         parent_id,
         id
     );
+    rt_has_changed = true;
     return RT_OK;
 }
 
@@ -144,6 +204,7 @@ rt_ret move_project(
         old_i,
         new_i
     );
+    rt_has_changed = true;
     return RT_OK;
 }
 
@@ -159,6 +220,7 @@ rt_ret collapse_project(
         id,
         is_collapsed
     );
+    rt_has_changed = true;
     return RT_OK;
 }
 
@@ -177,6 +239,7 @@ rt_ret title_project(
         title,
         strlen
     );
+    rt_has_changed = true;
     return RT_OK;
 }
 
@@ -204,6 +267,7 @@ rt_ret describe_project(
         diff_str,
         strlen
     );
+    rt_has_changed = true;
     return RT_OK;
 }
 
@@ -221,5 +285,6 @@ rt_ret abort_project(
         parent_id,
         i
     );
+    rt_has_changed = true;
     return RT_OK;
 }

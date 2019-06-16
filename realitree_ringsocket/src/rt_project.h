@@ -9,6 +9,10 @@ rt_ret load_projects(
     ckv_t * ckv
 );
 
+rt_ret store_projects(
+    ckv_t * ckv
+);
+
 void send_projects(
     rs_t * rs
 );

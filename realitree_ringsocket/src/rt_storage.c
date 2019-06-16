@@ -59,13 +59,13 @@ static rt_ret open_newest_file(
     return RT_OK;
 }
 
-rt_ret load_from_storage(
+rt_ret load_from_file(
     uint32_t * client_offset
 ) {
-    FILE *f = NULL;
+    FILE * f = NULL;
     RT_GUARD(open_newest_file(&f));
     if (f) {
-        ckv_t *ckv = ckv_init();
+        ckv_t * ckv = ckv_init();
         if (!ckv) {
             RS_LOG(LOG_ERR, "%s", ckv_get_err_str(ckv));
             fclose(f);
@@ -82,5 +82,47 @@ rt_ret load_from_storage(
         RT_GUARD(load_tasks(ckv));
         ckv_free(ckv);
     }
+    return RT_OK;
+}
+
+rt_ret store_as_file(
+    uint32_t client_offset
+) {
+    ckv_t * ckv = ckv_init();
+    if (!ckv) {
+        RS_LOG(LOG_ERR, "%s", ckv_get_err_str(NULL));
+        return RT_FATAL;
+    }
+    char const * root_keys[] = {"client_offset", "projects", "tasks"};
+    RT_GUARD_CKV(ckv_set_root(ckv, root_keys, CKV_ELEM_C(root_keys))); 
+    RT_GUARD_CKV(ckv_set_uint32(ckv, NULL, "client_offset", client_offset));
+    RT_GUARD(store_projects(ckv));
+    RT_GUARD(store_tasks(ckv));
+    {
+        time_t t = time(NULL);
+        struct tm *tlocal = localtime(&t);
+        strftime(
+            storage_path +
+                RS_CONST_STRLEN(RT_STORAGE_DIR) +
+                RS_CONST_STRLEN(RT_FILENAME_PREFIX),
+            // The strfime() max string size argument here boneheadedly also
+            // counts the \0 byte, so us sizeof rather than RT_CONST_STRLEN:
+            sizeof(RT_FILENAME_FORMAT),
+            "%Y%m%d-%H%M",
+            tlocal
+        );
+        // Overwrite '\0' written by strftime() to put '.' of ".ckv" back in.
+        storage_path[RS_CONST_STRLEN(RT_STORAGE_DIR) +
+                     RS_CONST_STRLEN(RT_FILENAME_PREFIX) +
+                     RS_CONST_STRLEN(RT_FILENAME_FORMAT)] = '.';
+    }
+    FILE *f = fopen(storage_path, "w");
+    if (!f) {
+        RS_LOG_ERRNO(LOG_ERR, "Unsuccessful fopen(%s, w)", storage_path);
+        return RT_FATAL;
+    }
+    RT_GUARD_CKV(ckv_print_file(ckv, f, storage_path, true));
+    fclose(f);
+    ckv_free(ckv);
     return RT_OK;
 }

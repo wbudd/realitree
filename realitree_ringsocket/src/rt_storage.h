@@ -5,6 +5,10 @@
 
 #include "realitree.h"
 
-rt_ret load_from_storage(
+rt_ret load_from_file(
     uint32_t * client_offset
+);
+
+rt_ret store_as_file(
+    uint32_t client_offset
 );

@@ -12,3 +12,7 @@ void init_tasks(
 rt_ret load_tasks(
     ckv_t * ckv
 );
+
+rt_ret store_tasks(
+    ckv_t * ckv
+);

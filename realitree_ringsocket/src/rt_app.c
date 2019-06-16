@@ -9,13 +9,15 @@
 #define RT_STRLEN_MAX_DIFF 1024
 #define RT_STRLEN_MAX_TITLE 64
 
+bool rt_has_changed = false;
+
 static uint32_t client_offset = 1;
 
 rt_ret app_init(
     void
 ) {
     init_tasks();
-    return load_from_storage(&client_offset);
+    return load_from_file(&client_offset);
 }
 
 rt_ret send_all(
@@ -48,6 +50,9 @@ int64_t timer(
     void
 ) {
     RS_LOG(LOG_DEBUG);
+    if (rt_has_changed) {
+        RT_GUARD((store_as_file(client_offset)));
+    }
     return 1000000; // Call this function again in 1 second
 }
 

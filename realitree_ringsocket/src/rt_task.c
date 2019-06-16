@@ -20,7 +20,7 @@ void init_tasks(
 rt_ret load_tasks(
     ckv_t * ckv
 ) {
-    struct ckv_map *maps = NULL;
+    struct ckv_map * maps = NULL;
     RT_GUARD_CKV(ckv_get_maps(ckv, (ckv_arg_maps){
         .key = "tasks",
         .dst = &maps,
@@ -33,8 +33,8 @@ rt_ret load_tasks(
         tasks_elem_c = new_elem_c;
     }
     for (size_t i = 0; i < task_c; i++) {
-        struct rt_task *task = tasks + i;
-        struct ckv_map *map = maps + i;
+        struct rt_task * task = tasks + i;
+        struct ckv_map * map = maps + i;
         RT_GUARD_CKV(ckv_get_uint32(ckv, (ckv_arg_uint32){
             .map = map,
             .key = "id",
@@ -87,4 +87,38 @@ rt_ret load_tasks(
         }
     }
     return RT_OK;
+}
+
+rt_ret store_tasks(
+    ckv_t * ckv
+) {
+    struct ckv_map * maps = NULL;
+    char const * keys[] = {"id", "description", "afterword", "tags",
+        "switch_times", "switch_c", "earliest", "latest", "status"};
+    RT_GUARD_CKV(ckv_set_maps(ckv, NULL, "tasks", &maps, task_c, keys,
+        CKV_ELEM_C(keys)));
+    for (size_t i = 0; i < task_c; i++) {
+        struct rt_task * task = tasks + i;
+        struct ckv_map * map = maps + i;
+        RT_GUARD_CKV(ckv_set_uint32(ckv, map, "id", task->id));
+        RT_GUARD_CKV(ckv_set_str(ckv, map, "description",
+            task->description));
+        if (task->afterword) {
+            RT_GUARD_CKV(ckv_set_str(ckv, map, "afterword",
+                task->afterword));
+        }
+        if (task->tags) {
+            RT_GUARD_CKV(ckv_set_str(ckv, map, "tags", task->tags));
+        }
+        if (task->switch_times) {
+            RT_GUARD_CKV(ckv_set_uint32s(ckv, map, "switch_times",
+                task->switch_times, task->switch_c));
+        }
+        RT_GUARD_CKV(ckv_set_uint32(ckv, map, "earliest", task->earliest));
+        if (task->latest) {
+            RT_GUARD_CKV(ckv_set_uint32(ckv, map, "latest", task->latest));
+        }
+        RT_GUARD_CKV(ckv_set_uint8(ckv, map, "status", task->status));
+    }
+    return CKV_OK;
 }
