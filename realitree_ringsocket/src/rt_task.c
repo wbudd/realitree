@@ -6,7 +6,7 @@
 #define RT_TASKS_ALLOC_C 1000
 #define RT_TASKS_REALLOC_FACTOR 1.5
 
-static struct rt_task *tasks = NULL;
+static struct rt_task * tasks = NULL;
 static size_t tasks_elem_c = 0;
 static size_t task_c = 0;
 

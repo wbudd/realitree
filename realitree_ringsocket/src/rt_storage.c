@@ -100,7 +100,7 @@ rt_ret store_as_file(
     RT_GUARD(store_tasks(ckv));
     {
         time_t t = time(NULL);
-        struct tm *tlocal = localtime(&t);
+        struct tm * tlocal = localtime(&t);
         strftime(
             storage_path +
                 RS_CONST_STRLEN(RT_STORAGE_DIR) +
@@ -116,7 +116,7 @@ rt_ret store_as_file(
                      RS_CONST_STRLEN(RT_FILENAME_PREFIX) +
                      RS_CONST_STRLEN(RT_FILENAME_FORMAT)] = '.';
     }
-    FILE *f = fopen(storage_path, "w");
+    FILE * f = fopen(storage_path, "w");
     if (!f) {
         RS_LOG_ERRNO(LOG_ERR, "Unsuccessful fopen(%s, w)", storage_path);
         return RT_FATAL;

@@ -8,8 +8,10 @@
 
 typedef enum {
     RT_FATAL = -1,
-    RT_OK = 0
-    // RT_FOO = 4000
+    RT_OK = 0,
+    RT_PROJECT_ID_NOT_FOUND = 4000,
+    RT_PROJECT_INVALID_SOURCE = 4001,
+    RT_PROJECT_INVALID_TARGET = 4002
 } rt_ret;
 
 #define RT_GUARD(rt_call) do { \
@@ -27,20 +29,20 @@ typedef enum {
 } while (0)
 
 struct rt_project {
-    struct rt_task **tagged_tasks;
-    struct rt_project *next;
-    struct rt_project *child;
-    char *title;
-    char *description;
+    struct rt_task * * tagged_tasks;
+    struct rt_project * next;
+    struct rt_project * child;
+    char * title;
+    char * description;
     uint32_t id;
     uint8_t is_collapsed;
 };
 
 struct rt_task {
-    char *description;
-    char *afterword;
-    char *tags;
-    uint32_t *switch_times;
+    char * description;
+    char * afterword;
+    char * tags;
+    uint32_t * switch_times;
     uint32_t switch_c;
     uint32_t earliest;
     uint32_t latest;

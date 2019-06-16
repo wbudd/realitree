@@ -170,6 +170,31 @@ void send_projects(
     send_child_projects(rs, root_project->child);
 }
 
+static struct rt_project * get_child_project(
+    struct rt_project * project,
+    uint32_t id
+) {
+    for (struct rt_project * p = project->child; p; p = p->next) {
+        if (p->id == id) {
+            return p;
+        }
+        struct rt_project * q = get_child_project(p, id);
+        if (q) {
+            return q;
+        }
+    }
+    return NULL;
+}
+
+static struct rt_project * get_project(
+    uint32_t id
+) {
+    if (root_project->id == id) {
+        return root_project;
+    }
+    return get_child_project(root_project, id);
+}
+ 
 rt_ret add_project(
     rs_t * rs,
     uint32_t parent_id,
@@ -182,8 +207,79 @@ rt_ret add_project(
         parent_id,
         id
     );
+    struct rt_project * p = get_project(parent_id);
+    if (!p) {
+        return RT_PROJECT_ID_NOT_FOUND;
+    }
+    if (p->child) {
+        p = p->child;
+        while (p->next) {
+            p = p->next;
+        }
+        p = p->next = calloc(1, sizeof(struct rt_project));
+    } else {
+        p = p->child = calloc(1, sizeof(struct rt_project));
+    }
+    p->id = id;
     rt_has_changed = true;
     return RT_OK;
+}
+
+static struct rt_project * cut_project(
+    uint32_t parent_id,
+    int i
+) {
+    struct rt_project * p = get_project(parent_id);
+    if (!p) {
+        return NULL;
+    }
+    struct rt_project * q = p->child;
+    if (!q) {
+        return NULL;
+    }
+    if (i == 0) {
+        p->child = q->next;
+        return q;
+    }
+    p = q->next;
+    for (;;) {
+        if (!p) {
+            return NULL;
+        }
+        if (--i < 1) {
+            break;
+        }
+        q = p;
+        p = p->next;
+    }
+    q->next = p->next;
+    return p;
+}
+
+static rt_ret paste_project(
+    uint32_t parent_id,
+    int i,
+    struct rt_project * project
+) {
+    struct rt_project * p = get_project(parent_id);
+    if (!p) {
+        return RT_PROJECT_INVALID_TARGET;
+    }
+    if (!i) {
+        project->next = p->child;
+        p->child = project;
+        return RT_OK;
+    }
+    p = p->child;
+    while (p) {
+        if (--i < 1) {
+            project->next = p->next;
+            p->next = project;
+            return RT_OK;
+        }
+        p = p->next;
+    }
+    return RT_PROJECT_INVALID_TARGET;
 }
 
 rt_ret move_project(
@@ -204,6 +300,11 @@ rt_ret move_project(
         old_i,
         new_i
     );
+    struct rt_project * p = cut_project(old_parent_id, old_i);
+    if (!p) {
+        return RT_PROJECT_INVALID_SOURCE;
+    }
+    RT_GUARD(paste_project(new_parent_id, new_i, p));
     rt_has_changed = true;
     return RT_OK;
 }
@@ -220,6 +321,11 @@ rt_ret collapse_project(
         id,
         is_collapsed
     );
+    struct rt_project * project = get_project(id);
+    if (!project) {
+        return RT_PROJECT_ID_NOT_FOUND;
+    }
+    project->is_collapsed = is_collapsed;
     rt_has_changed = true;
     return RT_OK;
 }
@@ -239,6 +345,14 @@ rt_ret title_project(
         title,
         strlen
     );
+    struct rt_project * project = get_project(id);
+    if (!project) {
+        return RT_PROJECT_ID_NOT_FOUND;
+    }
+    if (project->title) {
+        free(project->title);
+    }
+    project->title = title;
     rt_has_changed = true;
     return RT_OK;
 }
@@ -267,7 +381,8 @@ rt_ret describe_project(
         diff_str,
         strlen
     );
-    rt_has_changed = true;
+    // todo
+    //rt_has_changed = true;
     return RT_OK;
 }
 
@@ -285,6 +400,7 @@ rt_ret abort_project(
         parent_id,
         i
     );
-    rt_has_changed = true;
+    // todo
+    //rt_has_changed = true;
     return RT_OK;
 }
