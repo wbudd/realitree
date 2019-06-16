@@ -242,18 +242,15 @@ static struct rt_project * cut_project(
         return q;
     }
     p = q->next;
-    for (;;) {
-        if (!p) {
-            return NULL;
-        }
+    while (p) {
         if (--i < 1) {
-            break;
+            q->next = p->next;
+            return p;
         }
         q = p;
         p = p->next;
     }
-    q->next = p->next;
-    return p;
+    return NULL;
 }
 
 static rt_ret paste_project(
