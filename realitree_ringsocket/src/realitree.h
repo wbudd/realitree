@@ -4,7 +4,7 @@
 #pragma once
 
 #include <ringsocket.h>
-#include <ckv.h>
+#include <jgrandson.h>
 
 typedef enum {
     RT_FATAL = -1,
@@ -21,9 +21,9 @@ typedef enum {
     } \
 } while (0)
 
-#define RT_GUARD_CKV(ckv_call) do { \
-    if ((ckv_call) != CKV_OK) { \
-        RS_LOG(LOG_ERR, "libckv error: %s", ckv_get_err_str(ckv)); \
+#define RT_GUARD_JG(_jg_call) do { \
+    if ((_jg_call) != JG_OK) { \
+        RS_LOG(LOG_ERR, "Jgrandson: %s", jg_get_err_str(jg, NULL, NULL)); \
         return RT_FATAL; \
     } \
 } while (0)

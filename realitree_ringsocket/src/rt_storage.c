@@ -10,13 +10,13 @@
 #define RT_STORAGE_DIR "/realitree_storage/"
 #define RT_FILENAME_PREFIX "Realitree"
 #define RT_FILENAME_FORMAT "00001122-0011"
-#define RT_FILENAME_SUFFIX ".ckv"
+#define RT_FILENAME_SUFFIX ".json"
 
 static char storage_path[] =
     RT_STORAGE_DIR RT_FILENAME_PREFIX RT_FILENAME_FORMAT RT_FILENAME_SUFFIX;
 
-static rt_ret open_newest_file(
-    FILE * * f
+static rt_ret set_newest_storage_path(
+    void
 ) {
     DIR * dir = opendir(RT_STORAGE_DIR);
     if (!dir) {
@@ -42,12 +42,6 @@ static rt_ret open_newest_file(
                 RS_LOG_ERRNO(LOG_ERR, "Unsuccessful closedir()");
                 return RT_FATAL;
             }
-            *f = fopen(storage_path, "r");
-            if (!*f) {
-                RS_LOG_ERRNO(LOG_ERR, "Unsuccessful fopen(%s, r)",
-                    storage_path);
-                return RT_FATAL;
-            }
             return RT_OK;
         }
     }
@@ -62,42 +56,29 @@ static rt_ret open_newest_file(
 rt_ret load_from_file(
     uint32_t * client_offset
 ) {
-    FILE * f = NULL;
-    RT_GUARD(open_newest_file(&f));
-    if (f) {
-        ckv_t * ckv = ckv_init();
-        if (!ckv) {
-            RS_LOG(LOG_ERR, "%s", ckv_get_err_str(ckv));
-            fclose(f);
-            return RT_FATAL;
-        }
-        RT_GUARD_CKV(ckv_parse_file(ckv, f, storage_path));
-        fclose(f);
-        RT_GUARD_CKV(ckv_get_uint32(ckv, (ckv_arg_uint32){
-            .key = "client_offset",
-            .is_required = true,
-            .dst = client_offset
-        }));
-        RT_GUARD(load_projects(ckv));
-        RT_GUARD(load_tasks(ckv));
-        ckv_free(ckv);
-    }
+    RT_GUARD(set_newest_storage_path());
+    jg_t * jg = jg_init();
+    RT_GUARD_JG(jg_parse_file(jg, storage_path));
+    jg_obj_get_t * root_obj = NULL;
+    RT_GUARD_JG(jg_root_get_obj(jg, NULL, &root_obj));
+    RT_GUARD_JG(jg_obj_get_uint32(jg, root_obj, "client_offset", NULL,
+        client_offset));
+    RT_GUARD(load_projects(jg, root_obj));
+    RT_GUARD(load_tasks(jg, root_obj));
+    jg_free(jg);
     return RT_OK;
 }
 
 rt_ret store_as_file(
     uint32_t client_offset
 ) {
-    ckv_t * ckv = ckv_init();
-    if (!ckv) {
-        RS_LOG(LOG_ERR, "%s", ckv_get_err_str(NULL));
-        return RT_FATAL;
-    }
-    char const * root_keys[] = {"client_offset", "projects", "tasks"};
-    RT_GUARD_CKV(ckv_set_root(ckv, root_keys, CKV_ELEM_C(root_keys))); 
-    RT_GUARD_CKV(ckv_set_uint32(ckv, NULL, "client_offset", client_offset));
-    RT_GUARD(store_projects(ckv));
-    RT_GUARD(store_tasks(ckv));
+    jg_t * jg = jg_init();
+    jg_obj_set_t * root_obj = NULL;
+    RT_GUARD_JG(jg_root_set_obj(jg, &root_obj));
+    RT_GUARD_JG(jg_obj_set_uint32(jg, root_obj, "client_offset",
+        client_offset));
+    RT_GUARD(store_projects(jg, root_obj));
+    RT_GUARD(store_tasks(jg, root_obj));
     {
         time_t t = time(NULL);
         struct tm * tlocal = localtime(&t);
@@ -116,13 +97,7 @@ rt_ret store_as_file(
                      RS_CONST_STRLEN(RT_FILENAME_PREFIX) +
                      RS_CONST_STRLEN(RT_FILENAME_FORMAT)] = '.';
     }
-    FILE * f = fopen(storage_path, "w");
-    if (!f) {
-        RS_LOG_ERRNO(LOG_ERR, "Unsuccessful fopen(%s, w)", storage_path);
-        return RT_FATAL;
-    }
-    RT_GUARD_CKV(ckv_print_file(ckv, f, storage_path, true));
-    fclose(f);
-    ckv_free(ckv);
+    RT_GUARD_JG(jg_generate_file(jg, NULL, storage_path));
+    jg_free(jg);
     return RT_OK;
 }

@@ -6,11 +6,13 @@
 #include "realitree.h"
 
 rt_ret load_projects(
-    ckv_t * ckv
+    jg_t * jg,
+    jg_obj_get_t * obj
 );
 
 rt_ret store_projects(
-    ckv_t * ckv
+    jg_t * jg,
+    jg_obj_set_t * obj
 );
 
 void send_projects(

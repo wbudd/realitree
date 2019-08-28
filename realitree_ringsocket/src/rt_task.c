@@ -18,107 +18,81 @@ void init_tasks(
 }
 
 rt_ret load_tasks(
-    ckv_t * ckv
+    jg_t * jg,
+    jg_obj_get_t * root_obj
 ) {
-    struct ckv_map * maps = NULL;
-    RT_GUARD_CKV(ckv_get_maps(ckv, (ckv_arg_maps){
-        .key = "tasks",
-        .dst = &maps,
-        .elem_c = &task_c
-    }));
-    if (task_c > tasks_elem_c) {
-        size_t new_elem_c = RT_TASKS_REALLOC_FACTOR * task_c;
+    jg_arr_get_t * arr = NULL;
+    size_t elem_c = 0;
+    RT_GUARD_JG(jg_obj_get_arr(jg, root_obj, "tasks", NULL, &arr, &elem_c));
+    if (elem_c > tasks_elem_c) {
+        size_t new_elem_c = RT_TASKS_REALLOC_FACTOR * elem_c;
         tasks = realloc(tasks, new_elem_c * sizeof(struct rt_task));
         memset(tasks + tasks_elem_c, 0, new_elem_c - tasks_elem_c);
         tasks_elem_c = new_elem_c;
     }
-    for (size_t i = 0; i < task_c; i++) {
+    for (size_t i = 0; i < elem_c; i++) {
+        jg_obj_get_t * obj = NULL;
+        RT_GUARD_JG(jg_arr_get_obj(jg, arr, i, NULL, &obj));
         struct rt_task * task = tasks + i;
-        struct ckv_map * map = maps + i;
-        RT_GUARD_CKV(ckv_get_uint32(ckv, (ckv_arg_uint32){
-            .map = map,
-            .key = "id",
-            .dst = &task->id,
-            .is_required = true
-        }));
-        RT_GUARD_CKV(ckv_get_str(ckv, (ckv_arg_str){
-            .map = map,
-            .key = "description",
-            .dst = &task->description
-        }));
-        RT_GUARD_CKV(ckv_get_str(ckv, (ckv_arg_str){
-            .map = map,
-            .key = "afterword",
-            .dst = &task->afterword
-        }));
-        RT_GUARD_CKV(ckv_get_str(ckv, (ckv_arg_str){
-            .map = map,
-            .key = "tags",
-            .dst = &task->tags
-        }));
+        RT_GUARD_JG(jg_obj_get_uint32(jg, obj, "id", NULL, &task->id));
+        RT_GUARD_JG(jg_obj_get_str(jg, obj, "description", NULL,
+            &task->description));
+        RT_GUARD_JG(jg_obj_get_str(jg, obj, "afterword", NULL,
+            &task->afterword));
+        RT_GUARD_JG(jg_obj_get_str(jg, obj, "tags", NULL, &task->tags));
         {
-            size_t switch_c = 0;
-            RT_GUARD_CKV(ckv_get_uint32s(ckv, (ckv_arg_uint32s){
-                .map = map,
-                .key = "switch_times",
-                .dst = &task->switch_times,
-                .elem_c = &switch_c
-            }));
-            task->switch_c = switch_c; // from size_t to uint32_t
+            jg_arr_get_t * child_arr = NULL;
+            size_t child_elem_c = 0;
+            RT_GUARD_JG(jg_obj_get_arr(jg, obj, "switch_times", NULL,
+                &child_arr, &child_elem_c));
+            for (size_t j = 0; j < child_elem_c; j++) {
+                RT_GUARD_JG(jg_arr_get_uint32(jg, child_arr, j, NULL,
+                    task->switch_times + j));
+            }
+            task->switch_c = child_elem_c; // from size_t to uint32_t
         }
-        RT_GUARD_CKV(ckv_get_uint32(ckv, (ckv_arg_uint32){
-            .map = map,
-            .key = "earliest",
-            .dst = &task->earliest
-        }));
-        RT_GUARD_CKV(ckv_get_uint32(ckv, (ckv_arg_uint32){
-            .map = map,
-            .key = "latest",
-            .dst = &task->latest
-        }));
-        RT_GUARD_CKV(ckv_get_uint8(ckv, (ckv_arg_uint8){
-            .map = map,
-            .key = "status",
-            .dst = &task->status
-        }));
-        if (task->status > 2) {
-            RS_LOG(LOG_ERR, "Invalid status: %u", task->status);
-            return RT_FATAL;
-        }
+        RT_GUARD_JG(jg_obj_get_uint32(jg, obj, "earliest", NULL,
+            &task->earliest));
+        RT_GUARD_JG(jg_obj_get_uint32(jg, obj, "latest", NULL,
+            &task->earliest));
+        RT_GUARD_JG(jg_obj_get_uint8(jg, obj, "status", &(jg_obj_uint8){
+            .max = &(uint8_t){2},
+            .max_reason = "Only task status codes 0 through 2 are recognized."
+        }, &task->status));
     }
     return RT_OK;
 }
 
 rt_ret store_tasks(
-    ckv_t * ckv
+    jg_t * jg,
+    jg_obj_set_t * root_obj
 ) {
-    struct ckv_map * maps = NULL;
-    char const * keys[] = {"id", "description", "afterword", "tags",
-        "switch_times", "switch_c", "earliest", "latest", "status"};
-    RT_GUARD_CKV(ckv_set_maps(ckv, NULL, "tasks", &maps, task_c, keys,
-        CKV_ELEM_C(keys)));
+    jg_arr_set_t * arr = NULL;
+    RT_GUARD_JG(jg_obj_set_arr(jg, root_obj, "tasks", &arr));
     for (size_t i = 0; i < task_c; i++) {
+        jg_obj_set_t * obj = NULL;
+        RT_GUARD_JG(jg_arr_set_obj(jg, arr, &obj));
         struct rt_task * task = tasks + i;
-        struct ckv_map * map = maps + i;
-        RT_GUARD_CKV(ckv_set_uint32(ckv, map, "id", task->id));
-        RT_GUARD_CKV(ckv_set_str(ckv, map, "description",
-            task->description));
+        RT_GUARD_JG(jg_obj_set_uint32(jg, obj, "id", task->id));
+        RT_GUARD_JG(jg_obj_set_str(jg, obj, "description", task->description));
         if (task->afterword) {
-            RT_GUARD_CKV(ckv_set_str(ckv, map, "afterword",
-                task->afterword));
+            RT_GUARD_JG(jg_obj_set_str(jg, obj, "afterword", task->afterword));
         }
         if (task->tags) {
-            RT_GUARD_CKV(ckv_set_str(ckv, map, "tags", task->tags));
+            RT_GUARD_JG(jg_obj_set_str(jg, obj, "tags", task->tags));
         }
         if (task->switch_times) {
-            RT_GUARD_CKV(ckv_set_uint32s(ckv, map, "switch_times",
-                task->switch_times, task->switch_c));
+            jg_arr_set_t * a = NULL;
+            RT_GUARD_JG(jg_obj_set_arr(jg, obj, "switch_times", &a));
+            for (size_t i = 0; i < task->switch_c; i++) {
+                RT_GUARD_JG(jg_arr_set_uint32(jg, a, task->switch_times[i]));
+            }
         }
-        RT_GUARD_CKV(ckv_set_uint32(ckv, map, "earliest", task->earliest));
+        RT_GUARD_JG(jg_obj_set_uint32(jg, obj, "earliest", task->earliest));
         if (task->latest) {
-            RT_GUARD_CKV(ckv_set_uint32(ckv, map, "latest", task->latest));
+            RT_GUARD_JG(jg_obj_set_uint32(jg, obj, "latest", task->latest));
         }
-        RT_GUARD_CKV(ckv_set_uint8(ckv, map, "status", task->status));
+        RT_GUARD_JG(jg_obj_set_uint8(jg, obj, "status", task->status));
     }
-    return CKV_OK;
+    return JG_OK;
 }

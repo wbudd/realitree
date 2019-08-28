@@ -8,133 +8,115 @@ static struct rt_project root_project[1] = {0};
 // Prototype required here because load_child_projects() and load_project()
 // call each other in mutual recursion.
 static rt_ret load_project(
-    ckv_t * ckv,
-    struct ckv_map * map,
+    jg_t * jg,
+    jg_obj_get_t * obj,
     struct rt_project * project
 );
 
 // Same situation as above for store_child_projects() and store_project()
 static rt_ret store_project(
-    ckv_t * ckv,
-    struct ckv_map * map,
+    jg_t * jg,
+    jg_obj_set_t * obj,
     struct rt_project * project
 );
 
 static rt_ret load_child_projects(
-    ckv_t * ckv,
-    struct ckv_map * map,
+    jg_t * jg,
+    jg_obj_get_t * obj,
     struct rt_project * project,
     char const * key
 ) {
-    struct ckv_map * child_maps = NULL;
-    size_t child_map_c = 0;
-    RT_GUARD_CKV(ckv_get_maps(ckv, (ckv_arg_maps){
-        .map = map,
-        .key = key,
-        .dst = &child_maps,
-        .elem_c = &child_map_c
-    }));
-    if (!child_map_c) {
+    jg_arr_get_t * arr = NULL;
+    size_t elem_c = 0;
+    RT_GUARD_JG(jg_obj_get_arr(jg, obj, key, NULL, &arr, &elem_c));
+    if (!elem_c) {
         return RT_OK;
     }
     project = project->child = calloc(1, sizeof(struct rt_project));
-    for (;; project = project->next = calloc(1, sizeof(struct rt_project))) {
-        RT_GUARD(load_project(ckv, child_maps++, project));
-        if (!--child_map_c) {
+    for (size_t i = 0;;) {
+        jg_obj_get_t * child_obj = NULL;
+        RT_GUARD_JG(jg_arr_get_obj(jg, arr, i, NULL, &child_obj));
+        RT_GUARD(load_project(jg, child_obj, project));
+        if (++i >= elem_c) {
             return RT_OK;
         }
+        project = project->next = calloc(1, sizeof(struct rt_project));
     }
 }
 
 static rt_ret load_project(
-    ckv_t * ckv,
-    struct ckv_map * map,
+    jg_t * jg,
+    jg_obj_get_t * obj,
     struct rt_project * project
 ) {
-    RT_GUARD_CKV(ckv_get_uint32(ckv, (ckv_arg_uint32){
-        .map = map,
-        .key = "id",
-        .dst = &project->id,
-        .is_required = true
-    }));
-    RT_GUARD_CKV(ckv_get_str(ckv, (ckv_arg_str){
-        .map = map,
-        .key = "title",
-        .dst = &project->title
-    }));
-    RT_GUARD_CKV(ckv_get_str(ckv, (ckv_arg_str){
-        .map = map,
-        .key = "description",
-        .dst = &project->description
-    }));
-    {
-        bool is_collapsed = false;
-        RT_GUARD_CKV(ckv_get_bool(ckv, (ckv_arg_bool){
-            .map = map,
-            .key = "is_collapsed",
-            .dst = &is_collapsed
-        }));
-        project->is_collapsed = is_collapsed; // from bool type to uint8_t
-    }
-    return load_child_projects(ckv, map, project, "children");
+    RT_GUARD_JG(jg_obj_get_uint32(jg, obj, "id", NULL, &project->id));
+    RT_GUARD_JG(jg_obj_get_str(jg, obj, "title", NULL, &project->title));
+    RT_GUARD_JG(jg_obj_get_str(jg, obj, "description", NULL,
+        &project->description));
+    bool is_collapsed = false;
+    RT_GUARD_JG(jg_obj_get_bool(jg, obj, "is_collapsed", &(bool){false},
+        &is_collapsed));
+    project->is_collapsed = is_collapsed; // from bool type to uint8_t
+    return load_child_projects(jg, obj, project, "children");
 }
 
 rt_ret load_projects(
-    ckv_t * ckv
+    jg_t * jg,
+    jg_obj_get_t * obj
 ) {
-    return load_child_projects(ckv, NULL, root_project, "projects");
+    return load_child_projects(jg, obj, root_project, "projects");
 }
 
 static rt_ret store_child_projects(
-    ckv_t * ckv,
-    struct ckv_map * map,
+    jg_t * jg,
+    jg_obj_set_t * obj,
     struct rt_project * project,
     char const * key
 ) {
+    project = project->child;
     size_t child_c = 0;
-    for (struct rt_project * p = project->child; p; p = p->next) {
+    for (struct rt_project * p = project; p; p = p->next) {
         child_c++;
     }
     if (!child_c) {
         return RT_OK;
     }
-    struct ckv_map * child_maps = NULL;
-    char const * child_keys[] =
-        {"id", "title", "description", "is_collapsed", "children"};
-    RT_GUARD_CKV(ckv_set_maps(ckv, map, key, &child_maps, child_c, child_keys,
-        CKV_ELEM_C(child_keys)));
-    project = project->child;
-    for (struct ckv_map * m = child_maps; m < child_maps + child_c; m++) {
-        RT_GUARD(store_project(ckv, m, project));
+    jg_arr_set_t * arr = NULL;
+    RT_GUARD_JG(jg_obj_set_arr(jg, obj, key, &arr));
+    for (size_t i = 0; i < child_c; i++) {
+        jg_obj_set_t * child_obj = NULL;
+        RT_GUARD_JG(jg_arr_set_obj(jg, arr, &child_obj));
+        RT_GUARD(store_project(jg, child_obj, project));
         project = project->next;
     }
     return RT_OK;
 }
 
 static rt_ret store_project(
-    ckv_t * ckv,
-    struct ckv_map * map,
+    jg_t * jg,
+    jg_obj_set_t * obj,
     struct rt_project * project
 ) {
-    RT_GUARD_CKV(ckv_set_uint32(ckv, map, "id", project->id));
+    RT_GUARD_JG(jg_obj_set_uint32(jg, obj, "id", project->id));
     if (project->title) {
-        RT_GUARD_CKV(ckv_set_str(ckv, map, "title", project->title));
+        RT_GUARD_JG(jg_obj_set_str(jg, obj, "title", project->title));
     }
     if (project->description) {
-        RT_GUARD_CKV(ckv_set_str(ckv, map, "description",
+        RT_GUARD_JG(jg_obj_set_str(jg, obj, "description",
             project->description));
     }
     if (project->is_collapsed) {
-        RT_GUARD_CKV(ckv_set_uint8(ckv, map, "is_collapsed",
+        RT_GUARD_JG(jg_obj_set_uint8(jg, obj, "is_collapsed",
             project->is_collapsed));
     }
-    return store_child_projects(ckv, map, project, "children");
+    return store_child_projects(jg, obj, project, "children");
 }
 
 rt_ret store_projects(
-    ckv_t * ckv
+    jg_t * jg,
+    jg_obj_set_t * obj
 ) {
-    return store_child_projects(ckv, NULL, root_project, "projects");
+    return store_child_projects(jg, obj, root_project, "projects");
 }
 
 static void send_child_projects(

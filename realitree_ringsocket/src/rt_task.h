@@ -10,9 +10,11 @@ void init_tasks(
 );
 
 rt_ret load_tasks(
-    ckv_t * ckv
+    jg_t * jg,
+    jg_obj_get_t * root_obj
 );
 
 rt_ret store_tasks(
-    ckv_t * ckv
+    jg_t * jg,
+    jg_obj_set_t * root_obj
 );
