@@ -7,7 +7,7 @@
 
 #include <dirent.h> // opendir(), readdir(), closedir()
 
-#define RT_STORAGE_DIR "/realitree_storage/"
+#define RT_STORAGE_DIR "realitree/"
 #define RT_FILENAME_PREFIX "Realitree"
 #define RT_FILENAME_FORMAT "00001122-0011"
 #define RT_FILENAME_SUFFIX ".json"
@@ -57,6 +57,7 @@ rt_ret load_from_file(
     uint32_t * client_offset
 ) {
     RT_GUARD(set_newest_storage_path());
+    RS_LOG(LOG_DEBUG, "storage_path: %s", storage_path);
     jg_t * jg = jg_init();
     RT_GUARD_JG(jg_parse_file(jg, storage_path));
     jg_obj_get_t * root_obj = NULL;

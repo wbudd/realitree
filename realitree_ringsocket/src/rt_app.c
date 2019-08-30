@@ -39,10 +39,9 @@ rt_ret peer_open(
 }
 
 rt_ret peer_close(
-    rs_t * rs
+    uint64_t client_id
 ) {
-    (void) rs;
-    RS_LOG(LOG_DEBUG);
+    RS_LOG(LOG_DEBUG, "Client ID %" PRIu64 " closed", client_id);
     return RT_OK;
 }
 
@@ -92,7 +91,7 @@ RS_APP(
                 RT_STRLEN_MAX_DIFF
             )
         ), // todo: complete_project()
-        RS_CASE_BIN(15, abort_project,
+        RS_CASE_BIN(16, abort_project,
             RS_NTOH(uint32_t), // parent_id
             RS_NTOH(uint16_t) // i
         )

@@ -28,7 +28,7 @@ static rt_ret load_child_projects(
 ) {
     jg_arr_get_t * arr = NULL;
     size_t elem_c = 0;
-    RT_GUARD_JG(jg_obj_get_arr(jg, obj, key, NULL, &arr, &elem_c));
+    RT_GUARD_JG(jg_obj_get_arr_defa(jg, obj, key, NULL, &arr, &elem_c));
     if (!elem_c) {
         return RT_OK;
     }
@@ -50,9 +50,14 @@ static rt_ret load_project(
     struct rt_project * project
 ) {
     RT_GUARD_JG(jg_obj_get_uint32(jg, obj, "id", NULL, &project->id));
-    RT_GUARD_JG(jg_obj_get_str(jg, obj, "title", NULL, &project->title));
-    RT_GUARD_JG(jg_obj_get_str(jg, obj, "description", NULL,
-        &project->description));
+    RT_GUARD_JG(jg_obj_get_str(jg, obj, "title", &(jg_obj_str){
+        .defa = "",
+        .nullify_empty_str = true
+    }, &project->title));
+    RT_GUARD_JG(jg_obj_get_str(jg, obj, "description", &(jg_obj_str){
+        .defa = "",
+        .nullify_empty_str = true
+    }, &project->description));
     bool is_collapsed = false;
     RT_GUARD_JG(jg_obj_get_bool(jg, obj, "is_collapsed", &(bool){false},
         &is_collapsed));
@@ -106,7 +111,7 @@ static rt_ret store_project(
             project->description));
     }
     if (project->is_collapsed) {
-        RT_GUARD_JG(jg_obj_set_uint8(jg, obj, "is_collapsed",
+        RT_GUARD_JG(jg_obj_set_bool(jg, obj, "is_collapsed",
             project->is_collapsed));
     }
     return store_child_projects(jg, obj, project, "children");
@@ -365,6 +370,24 @@ rt_ret describe_project(
     return RT_OK;
 }
 
+static void free_project_tree(struct rt_project *p) {
+	if (p->title) {
+		free(p->title);
+	}
+	if (p->description) {
+		free(p->description);
+	}
+	if (p->child) {
+		struct rt_project *q = p->child;
+		do {
+			struct rt_project *q_next = q->next;
+			free_project_tree(q);
+			q = q_next;
+		} while (q);
+	}
+	free(p);
+}
+
 // todo: complete_project()
 
 rt_ret abort_project(
@@ -379,7 +402,11 @@ rt_ret abort_project(
         parent_id,
         i
     );
-    // todo
-    //rt_has_changed = true;
+	struct rt_project *p = cut_project(parent_id, i);
+    if (!p) {
+        return RT_PROJECT_INVALID_SOURCE;
+    }
+	free_project_tree(p);
+    rt_has_changed = true;
     return RT_OK;
 }

@@ -23,7 +23,8 @@ rt_ret load_tasks(
 ) {
     jg_arr_get_t * arr = NULL;
     size_t elem_c = 0;
-    RT_GUARD_JG(jg_obj_get_arr(jg, root_obj, "tasks", NULL, &arr, &elem_c));
+    RT_GUARD_JG(jg_obj_get_arr_defa(jg, root_obj, "tasks", NULL, &arr,
+        &elem_c));
     if (elem_c > tasks_elem_c) {
         size_t new_elem_c = RT_TASKS_REALLOC_FACTOR * elem_c;
         tasks = realloc(tasks, new_elem_c * sizeof(struct rt_task));
@@ -67,6 +68,9 @@ rt_ret store_tasks(
     jg_t * jg,
     jg_obj_set_t * root_obj
 ) {
+    if (!task_c) {
+        return JG_OK;
+    }
     jg_arr_set_t * arr = NULL;
     RT_GUARD_JG(jg_obj_set_arr(jg, root_obj, "tasks", &arr));
     for (size_t i = 0; i < task_c; i++) {
