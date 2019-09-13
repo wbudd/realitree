@@ -39,15 +39,17 @@ rt_ret peer_open(
 }
 
 rt_ret peer_close(
-    uint64_t client_id
+    rs_t * rs
 ) {
+    uint64_t client_id = rs_get_client_id(rs);
     RS_LOG(LOG_DEBUG, "Client ID %" PRIu64 " closed", client_id);
     return RT_OK;
 }
 
 int64_t timer(
-    void
+    rs_t * rs
 ) {
+    (void) rs;
     RS_LOG(LOG_DEBUG);
     if (rt_has_changed) {
         RT_GUARD((store_as_file(client_offset)));
@@ -86,7 +88,7 @@ RS_APP(
             RS_NTOH(uint32_t), // crc32
             RS_NTOH(uint16_t), // splice_i
             RS_NTOH(uint16_t), // delete_c
-            RS_STR( // diff_str -- temp var, so use a VLA instead of the heap
+            RS_STR( // diff_str - temporary so use the stack instead of the heap
                 RT_STRLEN_MIN,
                 RT_STRLEN_MAX_DIFF
             )

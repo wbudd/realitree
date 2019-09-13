@@ -1,34 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright © 2019 William Budd
 
-// A minor modification of:
-// https://github.com/NuSkooler/enigma-bbs/blob/0.0.9-alpha/core/crc.js
-// Copyright (c) 2015-2019, Bryan D. Ashby
-// All rights reserved.
-//
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-//
-// * Redistributions of source code must retain the above copyright notice, this
-//  list of conditions and the following disclaimer.
-//
-// * Redistributions in binary form must reproduce the above copyright notice,
-//  this list of conditions and the following disclaimer in the documentation
-//  and/or other materials provided with the distribution.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-
-const CRC32_TABLE = new Int32Array([
+const CRC32 = new Int32Array([
   0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
   0xe963a535, 0x9e6495a3, 0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988,
   0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91, 0x1db71064, 0x6ab020f2,
@@ -79,44 +52,13 @@ export default class {
     this.crc = -1
   }
 
-  update (input) {
-    input = Buffer.isBuffer(input) ? input : Buffer.from(input, 'binary')
-    return input.length > 10240 ? this.update8(input) : this.update4(input)
-  }
-
-  update4 (input) {
-    const len = input.length - 3
-    let i = 0
-    for (i = 0; i < len;) {
-      this.crc = (this.crc >>> 8) ^ CRC32_TABLE[(this.crc ^ input[i++]) & 0xff]
-      this.crc = (this.crc >>> 8) ^ CRC32_TABLE[(this.crc ^ input[i++]) & 0xff]
-      this.crc = (this.crc >>> 8) ^ CRC32_TABLE[(this.crc ^ input[i++]) & 0xff]
-      this.crc = (this.crc >>> 8) ^ CRC32_TABLE[(this.crc ^ input[i++]) & 0xff]
-    }
-    while (i < len + 3) {
-      this.crc = (this.crc >>> 8) ^ CRC32_TABLE[(this.crc ^ input[i++]) & 0xff]
-    }
-  }
-
-  update8 (input) {
-    const len = input.length - 7
-    let i = 0
-    for (i = 0; i < len;) {
-      this.crc = (this.crc >>> 8) ^ CRC32_TABLE[(this.crc ^ input[i++]) & 0xff]
-      this.crc = (this.crc >>> 8) ^ CRC32_TABLE[(this.crc ^ input[i++]) & 0xff]
-      this.crc = (this.crc >>> 8) ^ CRC32_TABLE[(this.crc ^ input[i++]) & 0xff]
-      this.crc = (this.crc >>> 8) ^ CRC32_TABLE[(this.crc ^ input[i++]) & 0xff]
-      this.crc = (this.crc >>> 8) ^ CRC32_TABLE[(this.crc ^ input[i++]) & 0xff]
-      this.crc = (this.crc >>> 8) ^ CRC32_TABLE[(this.crc ^ input[i++]) & 0xff]
-      this.crc = (this.crc >>> 8) ^ CRC32_TABLE[(this.crc ^ input[i++]) & 0xff]
-      this.crc = (this.crc >>> 8) ^ CRC32_TABLE[(this.crc ^ input[i++]) & 0xff]
-    }
-    while (i < len + 7) {
-      this.crc = (this.crc >>> 8) ^ CRC32_TABLE[(this.crc ^ input[i++]) & 0xff]
-    }
+  update (byte) {
+    this.crc = (this.crc >>> 8) ^ CRC32[(this.crc ^ byte) & 0xff]
   }
 
   finalize () {
-    return (this.crc ^ (-1)) >>> 0
+    // The ">>> 0" part ensures that the JavaScript interpreter interprets the
+    // variable as an unsigned integer, or something similarly idiotic.
+    return (this.crc ^ -1) >>> 0
   }
 }

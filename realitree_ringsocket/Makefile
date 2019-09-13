@@ -11,11 +11,13 @@
 NAME = realitree.so
 NAME_PREFIX = rt_
 
-# Required by <ringsocket_ring.h> (which is a dependency of <ringsocket.h>).
+# Without this RingSocket will guess a cache line size of 64 bytes,
+# which is true on many common architectures, but far from all.
 RS_CACHELINE_SIZE := $(shell getconf LEVEL1_DCACHE_LINESIZE)
-ifeq ($(RS_CACHELINE_SIZE), 0)
-	RS_CACHELINE_SIZE = 64
-endif
+
+CC = gcc
+CFLAGS = -Wall -Wextra -Wpedantic -std=c11 \
+	-DRS_CACHELINE_SIZE=$(RS_CACHELINE_SIZE)
 
 CC = gcc
 CFLAGS = -Wall -Wextra -Wpedantic -std=c11 \

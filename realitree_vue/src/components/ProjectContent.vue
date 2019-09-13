@@ -133,8 +133,7 @@ export default {
       const title = this.$refs.title.innerText
       if (title !== this.project.title &&
           this.parentProject.children.includes(this.project)) {
-        // to do: use (existing) code to continuously send string diff instead
-        this.ws.sendProjectTitle(this.project.id, title)
+        this.ws.sendProjectTitle(this.project.id, this.project.title, title)
         this.project.title = title
       }
     },
@@ -142,8 +141,8 @@ export default {
       const description = this.$refs.description.innerText
       if (description !== this.project.description &&
           this.parentProject.children.includes(this.project)) {
-        // to do: use (existing) code to continuously send string diff instead
-        this.ws.sendProjectDescription(this.project.id, description)
+        this.ws.sendProjectDescription(this.project.id,
+          this.project.description, description)
         this.project.description = description
       }
     }

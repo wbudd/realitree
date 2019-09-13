@@ -348,7 +348,7 @@ rt_ret describe_project(
     uint16_t splice_i,
     uint16_t delete_c,
     char * diff_str,
-    size_t strlen
+    size_t diff_strlen
 ) {
     (void) rs;
     RS_LOG(LOG_DEBUG, "called with "
@@ -357,15 +357,22 @@ rt_ret describe_project(
         "splice_i=%" PRIu16 ", "
         "delete_c=%" PRIu16 ", "
         "diff_str=%s, and "
-        "strlen=%zu",
+        "diff_strlen=%zu",
         id,
         crc32,
         splice_i,
         delete_c,
         diff_str,
-        strlen
+        diff_strlen
     );
+    struct rt_project * project = get_project(id);
+    if (!project) {
+        return RT_PROJECT_ID_NOT_FOUND;
+    }
     // todo
+    //size_t whole_strlen =
+    //    project->description ? strlen(project->description) : 0;
+	//if (splice_i + delete_c <= size && compute_crc32(str, size) == crc32) {
     //rt_has_changed = true;
     return RT_OK;
 }
